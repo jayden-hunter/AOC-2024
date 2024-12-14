@@ -1,0 +1,11 @@
+[package]
+name = "day13"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.94"
+grid = "0.15.0"
+humantime = "2.1.0"
+num = "0.4.3"
+rayon = "1.10.0"
