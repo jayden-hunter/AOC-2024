@@ -5,9 +5,6 @@ use core::f32;
 use grid::Grid;
 use humantime::format_duration;
 use map::Map;
-use rayon::iter::ParallelBridge;
-use std::ops::Rem;
-use std::string;
 use std::{fs::read_to_string, time::Instant};
 mod map;
 
@@ -112,7 +109,7 @@ fn process_input(input: String) -> Result<ProcessedInput> {
 }
 
 fn solve_part_one(mut map: ProcessedInput) -> Result<Output> {
-    for i in 0..100 {
+    for _ in 0..100 {
         // println!("Tick {i} complete");
         map = next_tick(&map);
     }

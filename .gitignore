@@ -1,4 +1,5 @@
 day*/target
+day*/.gitignore
 */input.txt
 day*/flamegraph.svg
 */perf.*

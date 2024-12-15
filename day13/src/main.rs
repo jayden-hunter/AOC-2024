@@ -1,16 +1,21 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use humantime::format_duration;
+use nom::{character::is_digit, complete::tag, sequence::delimited};
+use serde::Deserialize;
 use std::{fs::read_to_string, time::Instant};
 mod map;
 
 type ProcessedInput = Vec<Game>;
 type Output = i64;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize)]
 struct Game {
-    button_a: (i64, i64),
-    button_b: (i64, i64),
-    prize: (i64, i64),
+    #[serde(rename = "Button A")]
+    button_a: Coordinates,
+    #[serde(rename = "Button B")]
+    button_b: Coordinates,
+    #[serde(rename = "Prize")]
+    prize: Coordinates,
 }
 
 impl Game {
@@ -106,49 +111,22 @@ fn process_input(input: String) -> Result<ProcessedInput> {
 }
 
 fn parse_game(game_iter: &mut std::str::Lines<'_>) -> Result<Option<Game>> {
-    let button_a_str = match game_iter.next() {
-        Some(t) => t,
-        None => return Ok(None),
-    };
-    let button_b_str = match game_iter.next() {
-        Some(t) => t,
-        None => return Ok(None),
-    };
-    let prize_str = match game_iter.next() {
-        Some(t) => t,
-        None => return Ok(None),
-    };
-    let (_, button_a_str) = match button_a_str.split_once("X+") {
-        Some(t) => t,
-        None => return Ok(None),
-    };
-    let (button_a_x, button_a_y) = match button_a_str.split_once(", Y+") {
-        Some(t) => t,
-        None => return Ok(None),
-    };
-    let button_a = (button_a_x.parse()?, button_a_y.parse()?);
+    let mut input = String::new();
+    for _ in 0..3 {
+        input.push_str(game_iter.next().ok_or(anyhow!("Game input not finished"))?);
+    }
+    let formatted_input = input
+        .replace(": X+", ": {\"X\": ")
+        .replace(", Y+", ", \"Y\": ")
+        .replace(": X=", ": {\"X\": ")
+        .replace(", Y=", ", \"Y\": ")
+        .replace("\n", "}, \n")
+        + "}";
 
-    let (_, button_b_str) = match button_b_str.split_once("X+") {
-        Some(t) => t,
-        None => return Ok(None),
-    };
-    let (button_b_x, button_b_y) = match button_b_str.split_once(", Y+") {
-        Some(t) => t,
-        None => return Ok(None),
-    };
-    let button_b = (button_b_x.parse()?, button_b_y.parse()?);
-
-    let (_, prize_str) = match prize_str.split_once("X=") {
-        Some(t) => t,
-        None => return Ok(None),
-    };
-    let (prize_x, prize_y) = match prize_str.split_once(", Y=") {
-        Some(t) => t,
-        None => return Ok(None),
-    };
-    let prize = (prize_x.parse()?, prize_y.parse()?);
-
-    Ok(Some(Game::new(button_a, button_b, prize)))
+    match serde_json::from_str::<Game>(&formatted_input) {
+        Ok(game) => println!("Parsed successfully: {:#?}", game),
+        Err(err) => eprintln!("Failed to parse input: {:#?}", err),
+    }
 }
 
 fn solve_part_one(data: ProcessedInput) -> Result<Output> {
