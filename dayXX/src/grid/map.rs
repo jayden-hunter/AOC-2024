@@ -2,7 +2,10 @@ use anyhow::{anyhow, Result};
 use grid::Grid;
 use std::fmt::Display;
 
-use super::{coordinate::Coordinate, direction::Direction};
+use super::{
+    coordinate::{self, Coordinate},
+    direction::Direction,
+};
 
 #[derive(Clone, Debug)]
 pub struct Map<T> {
@@ -72,7 +75,10 @@ impl<T: Default> Map<T> {
         Map::new(grid)
     }
 
-    pub fn from_str(input: &str, cell_fn: impl Fn(char) -> Result<T>) -> Result<Self> {
+    pub fn from_str_with_coords(
+        input: &str,
+        cell_fn: impl Fn(char, Coordinate) -> Result<T>,
+    ) -> Result<Self> {
         let iter = input.lines();
         let width = iter
             .clone()
@@ -83,10 +89,16 @@ impl<T: Default> Map<T> {
         let mut cells = Grid::new(width, height);
         for (row, line) in iter.enumerate() {
             for (col, c) in line.chars().enumerate() {
-                *cells.get_mut(row, col).unwrap() = cell_fn(c)?;
+                let coord = Coordinate::new(row, col);
+                *cells.get_mut(row, col).unwrap() = cell_fn(c, coord)?;
             }
         }
         Ok(Self::new(cells))
+    }
+
+    pub fn from_str(input: &str, cell_fn: impl Fn(char) -> Result<T>) -> Result<Self> {
+        let useless = |c, _: Coordinate| cell_fn(c);
+        Map::from_str_with_coords(input, useless)
     }
 }
 
