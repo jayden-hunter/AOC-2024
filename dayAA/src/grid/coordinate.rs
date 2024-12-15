@@ -1,4 +1,3 @@
-#[derive(Clone, Debug)]
 pub struct Coordinate {
     pub row: usize,
     pub col: usize,
@@ -19,10 +18,5 @@ impl Coordinate {
         let row = self.row.checked_add(delta_row)?;
         let col = self.col.checked_add(delta_col)?;
         Some(Coordinate::new(row, col))
-    }
-
-    pub fn translate(&self, dir: super::direction::Direction) -> Option<Coordinate> {
-        let (dr, dc) = dir.to_delta();
-        self.checked_add_signed(dr, dc)
     }
 }

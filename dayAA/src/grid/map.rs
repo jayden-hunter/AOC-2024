@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use grid::Grid;
 use std::fmt::Display;
 
@@ -90,7 +90,9 @@ impl<T: Default> Map<T> {
         for (row, line) in iter.enumerate() {
             for (col, c) in line.chars().enumerate() {
                 let coord = Coordinate::new(row, col);
-                *cells.get_mut(row, col).unwrap() = cell_fn(c, coord)?;
+                *cells.get_mut(row, col).ok_or(anyhow!(
+                    "Failed to get cell ({row}, {col}). Grid is {height}x{width}"
+                ))? = cell_fn(c, coord)?;
             }
         }
         Ok(Self::new(cells))
