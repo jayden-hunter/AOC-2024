@@ -1,6 +1,6 @@
-use std::fmt::Display;
-
+use anyhow::{anyhow, Result};
 use grid::Grid;
+use std::fmt::Display;
 
 use super::{coordinate::Coordinate, direction::Direction};
 
@@ -31,18 +31,16 @@ impl<T> Map<T> {
 
     pub fn get_relative_cell(
         &self,
-        cell: &(usize, usize),
+        cell: &Coordinate,
         direction: Direction,
-    ) -> Option<((usize, usize), &T)> {
+    ) -> Option<(Coordinate, &T)> {
         let (delta_row, delta_col) = direction.to_delta();
-        let new_row = cell.0.checked_add_signed(delta_row)?;
-        let new_col: usize = cell.1.checked_add_signed(delta_col)?;
-        let new_pos = (new_row, new_col);
-        let cell = self.cells.get(new_row, new_col)?;
+        let new_pos = cell.checked_add_signed(delta_row, delta_col)?;
+        let cell = self.get(&new_pos)?;
         Some((new_pos, cell))
     }
 
-    pub fn get_cardinal_cells(&self, pos: &(usize, usize)) -> Vec<((usize, usize), &T)> {
+    pub fn get_cardinal_cells(&self, pos: &Coordinate) -> Vec<(Coordinate, &T)> {
         let mut cells = vec![];
         for dir in Direction::cardinals() {
             if let Some(c) = self.get_relative_cell(pos, dir) {
@@ -52,8 +50,12 @@ impl<T> Map<T> {
         cells
     }
 
-    pub fn get(&self, coordinate: Coordinate) -> Option<&T> {
+    pub fn get(&self, coordinate: &Coordinate) -> Option<&T> {
         self.cells.get(coordinate.row, coordinate.col)
+    }
+
+    pub fn get_mut(&mut self, coordinate: &Coordinate) -> Option<&mut T> {
+        self.cells.get_mut(coordinate.row, coordinate.col)
     }
 
     pub fn rows(&self) -> usize {
@@ -68,6 +70,23 @@ impl<T: Default> Map<T> {
     pub fn clone_size(&self) -> Map<T> {
         let grid = Grid::new(self.rows(), self.cols());
         Map::new(grid)
+    }
+
+    pub fn from_str(input: &str, cell_fn: impl Fn(char) -> Result<T>) -> Result<Self> {
+        let iter = input.lines();
+        let width = iter
+            .clone()
+            .next()
+            .ok_or(anyhow!("Input must contain at least one line"))?
+            .len();
+        let height = iter.clone().count();
+        let mut cells = Grid::new(width, height);
+        for (row, line) in iter.enumerate() {
+            for (col, c) in line.chars().enumerate() {
+                *cells.get_mut(row, col).unwrap() = cell_fn(c)?;
+            }
+        }
+        Ok(Self::new(cells))
     }
 }
 

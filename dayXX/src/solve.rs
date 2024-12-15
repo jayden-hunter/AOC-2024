@@ -7,10 +7,10 @@ pub fn process_input(input: String) -> Result<ProcessedInput> {
     bail!("Unimplemented");
 }
 
-pub fn solve_part_one(mut map: ProcessedInput) -> Result<()> {
+pub fn solve_part_one(mut data: ProcessedInput) -> Result<()> {
     bail!("Unimplemented");
 }
 
-pub fn solve_part_two(mut map: ProcessedInput) -> Result<()> {
+pub fn solve_part_two(mut data: ProcessedInput) -> Result<()> {
     bail!("Unimplemented");
 }
